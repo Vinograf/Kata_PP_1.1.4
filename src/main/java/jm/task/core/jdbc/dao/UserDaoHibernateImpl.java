@@ -5,45 +5,41 @@ import jm.task.core.jdbc.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
-import java.sql.Connection;
+
+import org.hibernate.query.Query;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
-import static jm.task.core.jdbc.util.Util.getConnection;
 
 public class UserDaoHibernateImpl implements UserDao {
     public UserDaoHibernateImpl() {
 
     }
 
-    Connection connection = getConnection();
 
     @Override
     public void createUsersTable() {
-        {
-            PreparedStatement preparedStatement = null;
-            String create = "CREATE TABLE users (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(20), lastName VARCHAR(20), age INT)";
-            try {
-                preparedStatement = connection.prepareStatement(create);
-                preparedStatement.executeUpdate();
-
-            } catch (SQLException e) {
-            }
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            Query query = session.createSQLQuery("CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(20), lastName VARCHAR(20), age INT )").addEntity(User.class);
+            query.executeUpdate();
+        } catch (Exception e) {
+            transaction.rollback();
         }
     }
 
     @Override
     public void dropUsersTable() {
-        PreparedStatement preparedStatement = null;
-        String create =
-                "DROP TABLE users;";
-        try {
-            preparedStatement = connection.prepareStatement(create);
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            ;
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            Query query = session.createSQLQuery("DROP table if EXISTS users").addEntity(User.class);
+            query.executeUpdate();
+        } catch (Exception e) {
+            transaction.rollback();
         }
     }
 
